@@ -1,0 +1,21 @@
+#!/bin/sh
+if [ "$1" == "" ] || [ "$2" == "" ]; then
+	echo "Usage: mage_template_copy_file source/file.phtml destination-layout";
+	echo "I.e.: mage_template_copy_file catalog/product/list.phtml myLayout";
+	exit 1;
+fi
+
+if [[ -d "app/" ]]; then
+	if [[ -d "app/design/frontend/base/default/template/" ]]; then
+		cd "app/design/frontend/base/default/template/";
+		if [[ ! -f "$1" ]]; then
+			echo "File $1 doesn't appear to exist";
+			exit 1;
+		fi
+		
+		cp --parents "$1" "../../../default/$2/template/"
+	fi
+else
+    echo "Current directory doesn't appear to be a Magento root";
+	exit 1;
+fi

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ -d "var/cache/" ]]; then
+        rm -rf var/cache/mage-*
+        echo "Cleared Magento cache"
+else 
+        echo "Current directory	doesn't appear to be a Magento root"
+fi

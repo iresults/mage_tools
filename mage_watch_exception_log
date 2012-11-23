@@ -1,0 +1,6 @@
+#!/bin/bash
+if [[ -d "var/log/" ]]; then
+	tail -fn 45 --sleep-interval=5 var/log/exception.log
+else
+	echo "Your not in a Magento root"
+fi
