@@ -1,0 +1,22 @@
+#!/bin/sh
+if [ "$1" == "" ] || [ "$2" == "" ]; then
+	echo "Usage: mage_layout_copy_file source.xml destination-layout";
+	echo "I.e.: mage_layout_copy_file page.xml myLayout";
+	echo "Info: The prefered way would be to collect all changes in the local.xml of myLayout";
+	exit 1;
+fi
+
+if [[ -d "app/" ]]; then
+	if [[ -d "app/design/frontend/base/default/layout/" ]]; then
+		cd "app/design/frontend/base/default/layout/";
+		if [[ ! -f "$1" ]]; then
+			echo "File $1 doesn't appear to exist";
+			exit 1;
+		fi
+
+		cp --parents "$1" "../../../default/$2/layout/"
+	fi
+else
+    echo "Current directory doesn't appear to be a Magento root";
+	exit 1;
+fi
