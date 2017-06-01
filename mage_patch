@@ -12,8 +12,11 @@ function _check_argument_patch_file() {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Required argument patch file missing";
         exit 1;
+    fi
 
-        echo "$1 < this is just to hide a IDE warning";
+    if [[ ! -e "$1" ]]; then
+        lib::print_error "Provided patch file '$1' does not exist";
+        exit 1;
     fi
 }
 
@@ -79,7 +82,7 @@ function _find_files_to_patch_with_prefix() {
             local custom_template_relative=$(_make_theme_path_relative "$custom_template" "$prefix");
             set +e;
             echo "$patched_files" | grep -q "$custom_template_relative" && {
-                if [[ "$VERBOSE" != "" ]]; then
+                if [[ "$VERBOSE" != "false" ]]; then
                     lib::print_info "Custom template: $custom_template";
                     lib::print_info "Patch:";
                     local escaped_custom_template=$(echo ${custom_template_relative} | sed -e 's!/!\\/!g');
@@ -93,6 +96,40 @@ function _find_files_to_patch_with_prefix() {
             set -e;
         fi
     done <<< "$custom_templates"
+}
+
+function mage::patch-simulate() {
+    _check_magento_root;
+    _check_argument_patch_file "$@";
+
+    local patch_file="$1";
+    local prefix="$2";
+
+    local REVERT_FLAG="";
+    if [[ "$(lib::has_argument "-R" $@)" == "true" ]] || [[ "$(lib::has_argument "--revert" $@)" == "true" ]] ;then
+        REVERT_FLAG="-R";
+    fi
+
+    lib::print_info "Checking if patch can be applied/reverted successfully"
+    local result=`sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$patch_file" | patch --dry-run $REVERT_FLAG -p0`
+    local status=$?
+    if [ ${status} -eq 1 ] ; then
+        lib::print_error "Patch can't be applied/reverted successfully.\n\n$result";
+        exit 1;
+    fi
+    if [ ${status} -eq 2 ] ; then
+        lib::print_error "Patch can't be applied/reverted successfully.";
+        exit 2;
+    fi
+
+    if [[ "$REVERT_FLAG" != "-R" ]];then
+        lib::print_success "Patch can be applied";
+    else
+        lib::print_success "Patch can be reverted";
+    fi
+    if [[ "$VERBOSE" != "false" ]]; then
+        echo "$result";
+    fi
 }
 
 function mage::list-patches() {
@@ -143,6 +180,7 @@ function mage::find-adminhtml-files() {
 function print_usage() {
     echo "Usage: $0 command
 
+patch-simulate                  Perform a dry run of the patch
 find-files                      Search for non-core template and skin files that should be patched
 find-frontend-files             Search for non-core template and skin files for the frontend that should be patched
 find-adminhtml-files            Search for non-core template and skin files for the backend that should be patched
@@ -166,11 +204,9 @@ function run () {
     COMMAND="$1";
     shift;
 
-    for var in "$@"; do
-        if [[ "$var" == "-v" ]]; then
-            VERBOSE="true";
-        fi
-    done
+    if [[ "$VERBOSE" == "" ]]; then
+        VERBOSE=$(lib::has_argument "-v" "$@");
+    fi
 
     if type "mage::$COMMAND" &> /dev/null; then
         mage::${COMMAND} "$@";
