@@ -98,6 +98,10 @@ function _find_files_to_patch_with_prefix() {
     done <<< "$custom_templates"
 }
 
+function mage::selfupdate() {
+    lib::selfupdate;
+}
+
 function mage::patch-simulate() {
     _check_magento_root;
     _check_argument_patch_file "$@";
@@ -180,6 +184,7 @@ function mage::find-adminhtml-files() {
 function print_usage() {
     echo "Usage: $0 command
 
+selfupdate                      Update the mage_tools
 patch-simulate                  Perform a dry run of the patch
 find-files                      Search for non-core template and skin files that should be patched
 find-frontend-files             Search for non-core template and skin files for the frontend that should be patched
@@ -200,6 +205,8 @@ function run () {
 
         exit 1;
     fi
+
+    lib::check_utilities;
 
     COMMAND="$1";
     shift;

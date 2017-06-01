@@ -2,13 +2,57 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 
+### MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWM
+### HELPER METHODS
+### MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWM
+function lib::check_utilities() {
+    if ! hash find 2> /dev/null; then
+        >&2 echo "command 'find' not found";
+        exit 1;
+    fi
+    if ! hash xargs 2> /dev/null; then
+        >&2 echo "command 'xargs' not found";
+        exit 1;
+    fi
+    if ! hash grep 2> /dev/null; then
+        >&2 echo "command 'grep' not found";
+        exit 1;
+    fi
+    if ! hash git 2> /dev/null; then
+        >&2 echo "command 'git' not found";
+        exit 1;
+    fi
+    if ! hash sed 2> /dev/null; then
+        >&2 echo "command 'sed' not found";
+        exit 1;
+    fi
+}
+
+function _get_script_directory() {
+    if hash realpath 2> /dev/null; then
+        pushd "$(dirname `realpath ${BASH_SOURCE[0]}`)" > /dev/null;
+    else
+        pushd "$(dirname ${BASH_SOURCE[0]})" > /dev/null;
+    fi
+
+    pwd;
+}
+
+function lib::selfupdate() {
+    cd $(_get_script_directory);
+
+    if [[ -e "lib.sh" ]]; then
+        git pull;
+    else
+        lib::print_error "Could not reliably determine the installation dir";
+    fi
+}
+
 function lib::has_argument() {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Missing argument 1 (search)";
     fi
-    if [[ "$#" -lt "2" ]]; then
-        lib::print_error "At least 2 arguments must be given";
-    fi
+
     local search="$1";
     shift;
     for var in "$@"; do
