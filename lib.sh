@@ -28,7 +28,7 @@ function lib::check_utilities() {
     fi
 }
 
-function _get_script_directory() {
+function lib::get_script_directory() {
     if hash realpath 2> /dev/null; then
         pushd "$(dirname `realpath ${BASH_SOURCE[0]}`)" > /dev/null;
     else
@@ -39,7 +39,7 @@ function _get_script_directory() {
 }
 
 function lib::selfupdate() {
-    cd $(_get_script_directory);
+    cd $(lib::get_script_directory);
 
     if [[ -e "lib.sh" ]]; then
         git pull;
