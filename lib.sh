@@ -48,6 +48,14 @@ function lib::selfupdate() {
     fi
 }
 
+
+function lib::check_magento_root() {
+    if [[ ! -e "app" ]]; then
+        lib::print_error "Run the script from within the Magento root directory";
+        exit 1;
+    fi
+}
+
 function lib::has_argument() {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Missing argument 1 (search)";

@@ -2,11 +2,17 @@
 set -o nounset
 set -e
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
-
-: ${VERBOSE=""}
+if hash realpath 2> /dev/null; then
+    DIR="$( cd "$(dirname $(realpath "${BASH_SOURCE[0]}" ))" && pwd )";
+else
+    DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )";
+fi
 
 source "$DIR/lib.sh";
+
+# Define the library/program to use for patching. Valid options are "patch" and "git"
+: ${PATCH_MODE="patch"}
+: ${VERBOSE=""}
 
 function _check_argument_patch_file() {
     if [[ "$#" -lt "1" ]]; then
@@ -16,13 +22,6 @@ function _check_argument_patch_file() {
 
     if [[ ! -e "$1" ]]; then
         lib::print_error "Provided patch file '$1' does not exist";
-        exit 1;
-    fi
-}
-
-function _check_magento_root() {
-    if [[ ! -e "app" ]]; then
-        lib::print_error "Run the script from within the Magento root directory";
         exit 1;
     fi
 }
@@ -61,7 +60,7 @@ function _find_custom_templates() {
 }
 
 function _find_files_to_patch_with_prefix() {
-    _check_magento_root;
+    lib::check_magento_root;
     _check_argument_patch_file "$@";
 
     local patch_file="$1";
@@ -98,16 +97,15 @@ function _find_files_to_patch_with_prefix() {
     done <<< "$custom_templates"
 }
 
-function mage::selfupdate() {
-    lib::selfupdate;
+function _patch_stat() {
+    sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$1" | git apply --stat $2 -p0;
 }
 
-function mage::patch-simulate() {
-    _check_magento_root;
+function mage::simulate() {
+    lib::check_magento_root;
     _check_argument_patch_file "$@";
 
     local patch_file="$1";
-    local prefix="$2";
 
     local REVERT_FLAG="";
     if [[ "$(lib::has_argument "-R" $@)" == "true" ]] || [[ "$(lib::has_argument "--revert" $@)" == "true" ]] ;then
@@ -115,10 +113,25 @@ function mage::patch-simulate() {
     fi
 
     lib::print_info "Checking if patch can be applied/reverted successfully"
-    local result=`sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$patch_file" | patch --dry-run $REVERT_FLAG -p0`
-    local status=$?
+    local result;
+    local status;
+    set +e;
+    if [[ "$PATCH_MODE" == "patch" ]]; then
+        result=`sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$patch_file" | patch --dry-run $REVERT_FLAG -p0`
+        status=$?
+    elif [[ "$PATCH_MODE" == "git" ]]; then
+        result=`sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$patch_file" | git apply --check ${REVERT_FLAG} -p0 2>&1`;
+        status=$?
+    fi
+
     if [ ${status} -eq 1 ] ; then
-        lib::print_error "Patch can't be applied/reverted successfully.\n\n$result";
+        if [[ "$VERBOSE" != "false" ]]; then
+            lib::print_error "Patch can't be applied/reverted successfully.
+$result";
+            _patch_stat ${patch_file} "${REVERT_FLAG}";
+        else
+            lib::print_error "Patch can't be applied/reverted successfully."
+        fi
         exit 1;
     fi
     if [ ${status} -eq 2 ] ; then
@@ -132,8 +145,29 @@ function mage::patch-simulate() {
         lib::print_success "Patch can be reverted";
     fi
     if [[ "$VERBOSE" != "false" ]]; then
+        _patch_stat ${patch_file} ${REVERT_FLAG};
         echo "$result";
     fi
+}
+
+function mage::apply() {
+    lib::check_magento_root;
+    _check_argument_patch_file "$@";
+
+    local patch_file="$1";
+    shift;
+
+    /usr/bin/env bash "$patch_file" "$@";
+}
+
+function mage::list() {
+    lib::check_magento_root;
+    _check_argument_patch_file "$@";
+
+    local patch_file="$1";
+    shift;
+
+    /usr/bin/env bash "$patch_file" "--list";
 }
 
 function mage::list-patches() {
@@ -168,24 +202,25 @@ function mage::find-files() {
 }
 
 function mage::find-frontend-files() {
-    _check_magento_root;
+    lib::check_magento_root;
     _check_argument_patch_file "$@";
     _find_files_to_patch_with_prefix "$1" "app/design/frontend/";
     _find_files_to_patch_with_prefix "$1" "skin/frontend/";
 }
 
 function mage::find-adminhtml-files() {
-    _check_magento_root;
+    lib::check_magento_root;
     _check_argument_patch_file "$@";
     _find_files_to_patch_with_prefix "$1" "app/design/adminhtml/";
     _find_files_to_patch_with_prefix "$1" "skin/adminhtml/";
 }
 
-function print_usage() {
+function mage::help() {
     echo "Usage: $0 command
 
-selfupdate                      Update the mage_tools
-patch-simulate                  Perform a dry run of the patch
+apply                           Applies the patch
+list                            Show list of applied patches
+simulate                        Perform a dry run of the patch
 find-files                      Search for non-core template and skin files that should be patched
 find-frontend-files             Search for non-core template and skin files for the frontend that should be patched
 find-adminhtml-files            Search for non-core template and skin files for the backend that should be patched
@@ -201,7 +236,7 @@ list-custom-adminhtml-files     Search for non-core template and skin files for 
 function run () {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Missing argument 'command'";
-        print_usage;
+        mage::help;
 
         exit 1;
     fi

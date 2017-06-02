@@ -3,17 +3,21 @@ mage_tools
 
 Some terminal shortcuts to work with Magento
 
-Functions
----------
+```bash
+mt help
+```
+
+Some functions
+--------------
+
+### mt watch system
+Watch the Magento system log file (var/log/system.log)
+
+### mt watch exception
+Watch the Magento exception log file (var/log/exception.log)
 
 ### mage_clear_cache
 Removes all the content in var/cache/mage-*
-
-### mage_watch_system_log
-Watch the Magento system log file (var/log/system.log)
-
-### mage_watch_exception_log
-Watch the Magento exception log file (var/log/exception.log)
 
 ### mage_fix_file_permissions
 Set the file permissions
