@@ -276,7 +276,9 @@ list-patches-adminhtml-files    List all patched files for the backend
 list-patches-frontend-files     List all patched files for the frontend
 list-custom-frontend-files      Search for non-core template and skin files for the frontend
 list-custom-adminhtml-files     Search for non-core template and skin files for the backend
-
+repo-help                       Show available commands for repo-list
+repo-list                       List all available patches
+repo-download                   Download a patch file
 ";
 }
 
