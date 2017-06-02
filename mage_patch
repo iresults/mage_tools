@@ -14,7 +14,7 @@ source "$DIR/lib.sh";
 
 
 # Define the library/program to use for patching. Valid options are "patch" and "git"
-: ${PATCH_MODE="patch"}
+: ${PATCH_MODE=""}
 : ${VERBOSE=""}
 
 : ${MAG_ID=""}
@@ -119,6 +119,17 @@ function _patch_stat() {
     sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$1" | git apply --stat $2 -p0;
 }
 
+function _get_patch_mode() {
+    if [[ "$PATCH_MODE" == "" ]]; then
+        if [[ "$(lib::has_argument "--git" $@)" == "true" ]]; then
+            PATCH_MODE="git";
+        elif [[ "$(lib::has_argument "--patch" $@)" == "true" ]]; then
+            PATCH_MODE="patch";
+        fi
+    fi
+    echo "$PATCH_MODE";
+}
+
 function mage::simulate() {
     lib::check_magento_root;
     _check_argument_patch_file "$@";
@@ -133,13 +144,17 @@ function mage::simulate() {
     lib::print_info "Checking if patch can be applied/reverted successfully"
     local result;
     local status;
+
     set +e;
-    if [[ "$PATCH_MODE" == "patch" ]]; then
+    if [[ "$(_get_patch_mode "$@")" == "patch" ]]; then
         result=`sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$patch_file" | patch --dry-run $REVERT_FLAG -p0`
         status=$?
-    elif [[ "$PATCH_MODE" == "git" ]]; then
+    elif [[ "$(_get_patch_mode "$@")" == "git" ]]; then
         result=`sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$patch_file" | git apply --check ${REVERT_FLAG} -p0 2>&1`;
         status=$?
+    else
+        lib::print_error "Invalid patch mode '$PATCH_MODE'";
+        exit 3;
     fi
 
     if [ ${status} -eq 1 ] ; then
