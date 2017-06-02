@@ -248,7 +248,7 @@ function mage::repo-list {
         resource="files";
     fi
 
-    curl "https://$MAG_ID:$MAG_TOKEN@www.magentocommerce.com/products/downloads/info/$resource"
+    curl -s "https://$MAG_ID:$MAG_TOKEN@www.magentocommerce.com/products/downloads/info/$resource"
 }
 
 function mage::repo-download {
