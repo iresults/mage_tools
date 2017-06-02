@@ -17,6 +17,9 @@ source "$DIR/lib.sh";
 : ${PATCH_MODE="patch"}
 : ${VERBOSE=""}
 
+: ${MAG_ID=""}
+: ${MAG_TOKEN=""}
+
 function _check_argument_patch_file() {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Required argument patch file missing";
@@ -42,6 +45,17 @@ function _find_patches_with_prefix() {
             fi
         fi
     done
+}
+
+function _check_mage_api_credentials() {
+    if [[ "$MAG_ID" == "" ]]; then
+        lib::print_error "Please specify the environment variable MAG_ID";
+        exit 1;
+    fi
+    if [[ "$MAG_TOKEN" == "" ]]; then
+        lib::print_error "Please specify the environment variable MAG_TOKEN";
+        exit 1;
+    fi
 }
 
 function _make_theme_path_relative() {
@@ -218,6 +232,35 @@ function mage::find-adminhtml-files() {
     _find_files_to_patch_with_prefix "$1" "app/design/adminhtml/";
     _find_files_to_patch_with_prefix "$1" "skin/adminhtml/";
 }
+
+function mage::repo-help {
+    _check_mage_api_credentials;
+
+    mage::repo-list "help";
+}
+
+function mage::repo-list {
+    _check_mage_api_credentials;
+    local resource;
+    if [[ "$#" -gt "0" ]]; then
+        resource="$1";
+    else
+        resource="files";
+    fi
+
+    curl "https://$MAG_ID:$MAG_TOKEN@www.magentocommerce.com/products/downloads/info/$resource"
+}
+
+function mage::repo-download {
+    _check_mage_api_credentials;
+    if [[ "$#" -lt "1" ]]; then
+        lib::print_error "Required argument patch file missing";
+        exit 1;
+    fi
+
+    curl -O "https://$MAG_ID:$MAG_TOKEN@www.magentocommerce.com/products/downloads/file/$1"
+}
+
 
 function mage::help() {
     echo "Usage: $0 command
