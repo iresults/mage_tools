@@ -2,7 +2,11 @@
 set -o nounset
 set -e
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
+if hash realpath 2> /dev/null; then
+    DIR="$( cd "$(dirname $(realpath "${BASH_SOURCE[0]}" ))" && pwd )";
+else
+    DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )";
+fi
 
 : ${VERBOSE=""}
 
@@ -102,11 +106,12 @@ function mage::selfupdate() {
     lib::selfupdate;
 }
 
-function print_usage() {
+function mage::help() {
     echo "Usage: $0 command-set command
 
-selfupdate                  Update the mage_tools
-patch                       Patch related tasks
+selfupdate  Update the mage_tools
+patch       Patch related tasks
+watch       Watch log files
 
 ";
 }
@@ -114,7 +119,7 @@ patch                       Patch related tasks
 function run () {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Missing argument 'command-set'";
-        print_usage;
+        mage::help;
 
         exit 1;
     fi
@@ -128,6 +133,8 @@ function run () {
         mage::${COMMAND_SET} "$@";
     elif [[ -e "$(lib::get_script_directory)/mage_$COMMAND_SET" ]]; then
         /usr/bin/env bash "$(lib::get_script_directory)/mage_$COMMAND_SET" "$@";
+    elif [[ -e "$(lib::get_script_directory)/mage_$COMMAND_SET.sh" ]]; then
+        /usr/bin/env bash "$(lib::get_script_directory)/mage_$COMMAND_SET.sh" "$@";
     else
         lib::print_error "Command-set '$COMMAND_SET' not found";
     fi

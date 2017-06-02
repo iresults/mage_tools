@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -o nounset
+set -e
+
+if hash realpath 2> /dev/null; then
+    DIR="$( cd "$(dirname $(realpath "${BASH_SOURCE[0]}" ))" && pwd )";
+else
+    DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )";
+fi
+
+source "$DIR/lib.sh";
+
+function print_usage() {
+    echo "Usage: $0 command
+
+system      Watch the system log
+exception   Watch the exception log
+
+";
+}
+
+function _check_log_dir() {
+    lib::check_magento_root;
+
+	if [[ ! -d "var/log/" ]]; then
+		lib::print_error "The log directory var/log/ doesn't seem to exist";
+		exit 1;
+	fi
+}
+
+function mage::system () {
+    _check_log_dir;
+    tail -fn 45 --sleep-interval=5 var/log/system.log
+}
+
+function mage::exception() {
+    _check_log_dir;
+    tail -fn 45 --sleep-interval=5 var/log/exception.log
+}
+
+
+function run () {
+    if [[ "$#" -lt "1" ]]; then
+        lib::print_error "Missing argument 'command'";
+        print_usage;
+
+        exit 1;
+    fi
+
+    lib::check_utilities;
+
+    COMMAND="$1";
+    shift;
+
+    if type "mage::$COMMAND" &> /dev/null; then
+        mage::${COMMAND} "$@";
+    else
+        lib::print_error "Command '$COMMAND' not found";
+    fi
+}
+
+run "$@";
