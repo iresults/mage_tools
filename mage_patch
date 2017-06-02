@@ -123,7 +123,7 @@ function _get_patch_mode() {
     if [[ "$PATCH_MODE" == "" ]]; then
         if [[ "$(lib::has_argument "--git" $@)" == "true" ]]; then
             PATCH_MODE="git";
-        elif [[ "$(lib::has_argument "--patch" $@)" == "true" ]]; then
+        else
             PATCH_MODE="patch";
         fi
     fi
