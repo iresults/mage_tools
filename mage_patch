@@ -51,7 +51,7 @@ function _make_theme_path_relative() {
 
 function _find_custom_templates() {
     local subdirectory_name="$1";
-    find "$subdirectory_name" \
+    find -L "$subdirectory_name" \
         -mindepth 3 \
         -type f \
         -not -path "*/default/blank/*" \
