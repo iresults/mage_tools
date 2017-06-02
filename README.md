@@ -4,16 +4,16 @@ mage_tools
 Some terminal shortcuts to work with Magento
 
 ```bash
-mt help
+mat help
 ```
 
 Some functions
 --------------
 
-### mt watch system
+### mat watch system
 Watch the Magento system log file (var/log/system.log)
 
-### mt watch exception
+### mat watch exception
 Watch the Magento exception log file (var/log/exception.log)
 
 ### mage_clear_cache
