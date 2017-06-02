@@ -149,7 +149,7 @@ $result";
         lib::print_success "Patch can be reverted";
     fi
     if [[ "$VERBOSE" != "false" ]]; then
-        _patch_stat ${patch_file} ${REVERT_FLAG};
+        _patch_stat ${patch_file} "${REVERT_FLAG}";
         echo "$result";
     fi
 }
