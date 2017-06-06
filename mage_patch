@@ -281,8 +281,8 @@ function mage::help() {
     echo "Usage: $0 command
 
 apply                           Applies the patch
-list                            Show list of applied patches
 simulate                        Perform a dry run of the patch
+list                            Show list of applied patches
 find-files                      Search for non-core template and skin files that should be patched
 find-frontend-files             Search for non-core template and skin files for the frontend that should be patched
 find-adminhtml-files            Search for non-core template and skin files for the backend that should be patched
