@@ -115,8 +115,25 @@ function _find_files_to_patch_with_prefix() {
     done <<< "$custom_templates"
 }
 
+function _extract_patch() {
+    if [[ "$#" -lt "1" ]]; then
+        lib::print_error "Required argument patch file missing";
+        exit 1;
+    fi
+    sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$1";
+}
+
 function _patch_stat() {
-    sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$1" | git apply --stat $2 -p0;
+    local revert_flag="";
+    if [[ "$#" -gt "1" ]]; then
+        revert_flag="-R";
+    fi
+
+    if [[ "$#" -lt "1" ]]; then
+        lib::print_error "Required argument patch file missing";
+        exit 1;
+    fi
+    _extract_patch $1 | git apply --stat $2 -p0;
 }
 
 function _get_patch_mode() {
@@ -136,21 +153,22 @@ function mage::simulate() {
 
     local patch_file="$1";
 
-    local REVERT_FLAG="";
+    local revert_flag="";
     if [[ "$(lib::has_argument "-R" $@)" == "true" ]] || [[ "$(lib::has_argument "--revert" $@)" == "true" ]] ;then
-        REVERT_FLAG="-R";
+        revert_flag="-R";
     fi
 
     lib::print_info "Checking if patch can be applied/reverted successfully"
+    local patch_mode="$(_get_patch_mode "$@")";
     local result;
     local status;
 
     set +e;
-    if [[ "$(_get_patch_mode "$@")" == "patch" ]]; then
-        result=`sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$patch_file" | patch --dry-run $REVERT_FLAG -p0`
+    if [[ "$patch_mode" == "patch" ]]; then
+        result=`_extract_patch ${patch_file} | patch --dry-run ${revert_flag} -p0`
         status=$?
-    elif [[ "$(_get_patch_mode "$@")" == "git" ]]; then
-        result=`sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$patch_file" | git apply --check ${REVERT_FLAG} -p0 2>&1`;
+    elif [[ "$patch_mode" == "git" ]]; then
+        result=`_extract_patch ${patch_file} | git apply --check ${revert_flag} -p0 2>&1`;
         status=$?
     else
         lib::print_error "Invalid patch mode '$PATCH_MODE'";
@@ -161,7 +179,7 @@ function mage::simulate() {
         if [[ "$VERBOSE" != "false" ]]; then
             lib::print_error "Patch can't be applied/reverted successfully.
 $result";
-            _patch_stat ${patch_file} "${REVERT_FLAG}";
+            _patch_stat ${patch_file} "$revert_flag";
         else
             lib::print_error "Patch can't be applied/reverted successfully."
         fi
@@ -172,13 +190,13 @@ $result";
         exit 2;
     fi
 
-    if [[ "$REVERT_FLAG" != "-R" ]];then
+    if [[ "$revert_flag" != "-R" ]];then
         lib::print_success "Patch can be applied";
     else
         lib::print_success "Patch can be reverted";
     fi
     if [[ "$VERBOSE" != "false" ]]; then
-        _patch_stat ${patch_file} "${REVERT_FLAG}";
+        _patch_stat ${patch_file} "$revert_flag";
         echo "$result";
     fi
 }
