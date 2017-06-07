@@ -4,7 +4,7 @@ set -e
 
 if hash realpath 2> /dev/null; then
     DIR="$( cd "$(dirname $(realpath "${BASH_SOURCE[0]}" ))" && pwd )";
-elif hash readlink 2> /dev/null; then
+elif hash readlink 2> /dev/null && [[ "$(uname -s)" != "Darwin" ]]; then
     DIR="$( cd "$(dirname $(readlink -f "${BASH_SOURCE[0]}" ))" && pwd )";
 else
     DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )";
@@ -260,6 +260,24 @@ function mage::list-patches-adminhtml-files() {
     _find_patches_with_prefix "$1" "skin/adminhtml/" "no";
 }
 
+function mage::list-patches-classes() {
+    _check_argument_patch_file "$@";
+
+     grep "\sclass " "$1" | \
+        # Remove comments
+        sed 's!/.*!!' | \
+        # Remove '+     '
+        sed 's!+\s*!!' | \
+        # Remove empty lines
+        awk 'NF' | \
+        # Remove everything before 'class'
+        sed 's!^.*class !!' | \
+        # Use only the class name
+        awk '{print $1;}' | \
+        # Remove duplicates
+        awk '!a[$0]++';
+}
+
 function mage::list-custom-frontend-files() {
     _find_custom_templates "app/design/frontend/";
 }
@@ -326,6 +344,7 @@ find-files                      Search for non-core template and skin files that
 find-frontend-files             Search for non-core template and skin files for the frontend that should be patched
 find-adminhtml-files            Search for non-core template and skin files for the backend that should be patched
 list-patches                    List all patched files
+list-patches-classes            List all patched classes
 list-patches-adminhtml-files    List all patched files for the backend
 list-patches-frontend-files     List all patched files for the frontend
 list-custom-frontend-files      Search for non-core template and skin files for the frontend
