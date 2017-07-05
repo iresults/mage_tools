@@ -362,6 +362,13 @@ function run () {
 
         exit 1;
     fi
+    if [[ "$(lib::has_argument "-h" "$@")" == "true" ]] \
+        || [[ "$(lib::has_argument "--help" "$@")" == "true" ]] \
+        || [[ "$(lib::has_argument "help" "$@")" == "true" ]]; then
+        mage::help;
+
+        exit 0;
+    fi
 
     lib::check_utilities;
 

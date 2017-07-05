@@ -114,6 +114,7 @@ function mage::help() {
 selfupdate  Update the mage_tools
 patch       Patch related tasks
 watch       Watch log files
+report      Print error reports
 
 ";
 }
