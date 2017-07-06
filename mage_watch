@@ -17,6 +17,7 @@ function print_usage() {
 
 system      Watch the system log
 exception   Watch the exception log
+debug       Watch the debug log
 
 ";
 }
@@ -30,16 +31,38 @@ function _check_log_dir() {
 	fi
 }
 
-function mage::system () {
+function _check_log_file() {
+	if [[ ! -e "var/log/$1.log" ]]; then
+		lib::print_error "The log file var/log/$1.log doesn't seem to exist";
+		exit 1;
+	fi
+}
+
+function _watch() {
     _check_log_dir;
-    tail -fn 45 --sleep-interval=5 var/log/system.log
+    _check_log_file "$1";
+    tail -fn 45 --sleep-interval=5 "var/log/$1.log";
+}
+
+function mage::system () {
+    _watch "system";
 }
 
 function mage::exception() {
-    _check_log_dir;
-    tail -fn 45 --sleep-interval=5 var/log/exception.log
+    _watch "exception";
 }
 
+function mage::debug() {
+    _watch "debug";
+}
+
+function mage::sys() {
+    mage::system;
+}
+
+function mage::exc() {
+    mage::exception;
+}
 
 function run () {
     if [[ "$#" -lt "1" ]]; then
