@@ -12,7 +12,7 @@ fi
 
 source "$DIR/lib.sh";
 
-function print_usage() {
+function mage::watch::help() {
     echo "Usage: $0 command
 
 system      Watch the system log
@@ -44,44 +44,24 @@ function _watch() {
     tail -fn 45 --sleep-interval=5 "var/log/$1.log";
 }
 
-function mage::system () {
+function mage::watch::system () {
     _watch "system";
 }
 
-function mage::exception() {
+function mage::watch::exception() {
     _watch "exception";
 }
 
-function mage::debug() {
+function mage::watch::debug() {
     _watch "debug";
 }
 
-function mage::sys() {
-    mage::system;
+function mage::watch::sys() {
+    mage::watch::system;
 }
 
-function mage::exc() {
-    mage::exception;
+function mage::watch::exc() {
+    mage::watch::exception;
 }
 
-function run () {
-    if [[ "$#" -lt "1" ]]; then
-        lib::print_error "Missing argument 'command'";
-        print_usage;
-
-        exit 1;
-    fi
-
-    lib::check_utilities;
-
-    COMMAND="$1";
-    shift;
-
-    if type "mage::$COMMAND" &> /dev/null; then
-        mage::${COMMAND} "$@";
-    else
-        lib::print_error "Command '$COMMAND' not found";
-    fi
-}
-
-run "$@";
+lib::sub_command::run "mage::watch" "$@";

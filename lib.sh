@@ -26,6 +26,10 @@ function lib::check_utilities() {
         >&2 echo "command 'sed' not found";
         exit 1;
     fi
+    if ! hash php 2> /dev/null; then
+        >&2 echo "command 'php' not found";
+        exit 1;
+    fi
 }
 
 function lib::get_script_directory() {
@@ -53,6 +57,43 @@ function lib::check_magento_root() {
     if [[ ! -e "app" ]]; then
         lib::print_error "Run the script from within the Magento root directory";
         exit 1;
+    fi
+}
+
+function lib::get_magento_version() {
+    lib::check_magento_root;
+    php -r 'include_once __DIR__ . "/app/Mage.php";echo Mage::getVersion();'
+}
+
+function lib::sub_command::run () {
+    if [[ "$#" -lt "1" ]]; then
+        lib::print_error "Logic error: Missing argument 'namespace'";
+
+        exit 1;
+    fi
+
+    local namespace="$1";
+    shift;
+
+    if [[ "$#" -lt "1" ]] \
+        || [[ "$(lib::has_argument "-h" "$@")" == "true" ]] \
+        || [[ "$(lib::has_argument "--help" "$@")" == "true" ]] \
+        || [[ "$(lib::has_argument "help" "$@")" == "true" ]]; then
+        lib::print_error "Missing argument 'command'";
+        ${namespace}::help;
+
+        exit 1;
+    fi
+
+    lib::check_utilities;
+
+    COMMAND="$1";
+    shift;
+
+    if type "$namespace::$COMMAND" &> /dev/null; then
+        ${namespace}::${COMMAND} "$@";
+    else
+        lib::print_error "Command '$COMMAND' not found";
     fi
 }
 

@@ -22,6 +22,7 @@ function mage::help() {
     echo "Usage: $0 command-set command
 
 selfupdate  Update the mage_tools
+info        Print information about the Magento system
 patch       Patch related tasks
 watch       Watch log files
 report      Print error reports
