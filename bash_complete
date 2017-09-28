@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+_mage::_list_commands() {
+    local help="";
+    if [ "$#" -gt "0" ]; then
+        help="$(mat $1 --help)";
+    else
+        help="$(mat help)";
+    fi
+    echo "$help" | tail -n +3 | awk '{ print $1 }';
+}
+
+_mat() {
+    local cur prev opts;
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [ "${prev}" != "" ] && [ "${prev}" != "mat" ]; then
+        opts="--help $(_mage::_list_commands ${prev})";
+    else
+        opts="--help $(_mage::_list_commands)";
+    fi
+
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+}
+
+complete -F _mat mat
