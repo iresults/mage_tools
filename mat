@@ -12,6 +12,7 @@ fi
 
 : ${VERBOSE=""}
 
+if [ -e "lib.sh" ]; then source "lib.sh"; fi
 source "$DIR/lib.sh";
 
 function mage::selfupdate() {
@@ -43,7 +44,9 @@ function run () {
     COMMAND_SET="$1";
     shift;
 
-    if type "mage::$COMMAND_SET" &> /dev/null; then
+    if [ "$COMMAND_SET" == "--help" ]; then
+        mage::help;
+    elif type "mage::$COMMAND_SET" &> /dev/null; then
         mage::${COMMAND_SET} "$@";
     elif [[ -e "$(lib::get_script_directory)/mage_$COMMAND_SET" ]]; then
         /usr/bin/env bash "$(lib::get_script_directory)/mage_$COMMAND_SET" "$@";

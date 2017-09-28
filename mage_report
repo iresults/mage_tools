@@ -10,7 +10,9 @@ else
     DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )";
 fi
 
+if [ -e "lib.sh" ]; then source "lib.sh"; fi
 source "$DIR/lib.sh";
+
 
 function print_usage() {
     echo "Usage: $0 [report-id]
