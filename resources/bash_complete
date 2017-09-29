@@ -3,9 +3,9 @@
 _mage::_list_commands() {
     local help="";
     if [ "$#" -gt "0" ]; then
-        help="$(mat $1 --help 2> /dev/null)";
+        help="$(../mat $1 --help 2> /dev/null)";
     else
-        help="$(mat help 2> /dev/null)";
+        help="$(../mat help 2> /dev/null)";
     fi
     echo "$help" | tail -n +3 | awk '{ print $1 }';
 }
