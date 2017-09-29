@@ -24,7 +24,7 @@ debug       Watch the debug log
 }
 
 function _check_log_dir() {
-    lib::check_magento_root;
+    lib::go_to_magento_root;
 
 	if [[ ! -d "var/log/" ]]; then
 		lib::print_error "The log directory var/log/ doesn't seem to exist";

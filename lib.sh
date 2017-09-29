@@ -52,7 +52,6 @@ function lib::selfupdate() {
     fi
 }
 
-
 function lib::check_magento_root() {
     if [[ ! -e "app" ]]; then
         lib::print_error "Run the script from within the Magento root directory";
@@ -60,8 +59,24 @@ function lib::check_magento_root() {
     fi
 }
 
-function lib::get_magento_version() {
+function lib::go_to_magento_root() {
+    if [[ -e "app" ]]; then
+        return;
+    fi
+    if [[ -e "www" ]]; then
+        cd "www";
+    elif [[ -e "web" ]]; then
+        cd "web";
+    elif [[ -e "public_html" ]]; then
+        cd "public_html";
+    elif [[ -e "httpdocs" ]]; then
+        cd "httpdocs";
+    fi
     lib::check_magento_root;
+}
+
+function lib::get_magento_version() {
+    lib::go_to_magento_root;
     php -r 'include_once __DIR__ . "/app/Mage.php";echo Mage::getVersion();'
 }
 

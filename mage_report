@@ -37,7 +37,7 @@ function _show_latest() {
 }
 
 function run () {
-    lib::check_magento_root;
+    lib::go_to_magento_root;
     if [[ "$(lib::has_argument "-h" "$@")" == "true" ]] \
         || [[ "$(lib::has_argument "--help" "$@")" == "true" ]] \
         || [[ "$(lib::has_argument "help" "$@")" == "true" ]]; then
