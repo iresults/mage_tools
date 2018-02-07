@@ -28,7 +28,7 @@ function mage::session::gc() {
     fi
 
     lib::go_to_magento_root;
-    find var/session/ -type f -mtime "+$days" -print
+    find var/session/ -type f -mtime "+$days" -delete -print
 }
 
 lib::sub_command::run "mage::session" "$@";
