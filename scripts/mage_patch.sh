@@ -2,17 +2,7 @@
 set -o nounset
 set -e
 
-if hash realpath 2> /dev/null; then
-    DIR="$( cd "$(dirname $(realpath "${BASH_SOURCE[0]}" ))" && pwd )";
-elif hash readlink 2> /dev/null && [[ "$(uname -s)" != "Darwin" ]]; then
-    DIR="$( cd "$(dirname $(readlink -f "${BASH_SOURCE[0]}" ))" && pwd )";
-else
-    DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )";
-fi
-
-if [ -e "lib.sh" ]; then source "lib.sh"; fi
-source "$DIR/lib.sh";
-
+if [ -e "../lib.sh" ]; then source "../lib.sh"; fi
 
 # Define the library/program to use for patching. Valid options are "patch" and "git"
 : ${PATCH_MODE=""}
@@ -21,7 +11,7 @@ source "$DIR/lib.sh";
 : ${MAG_ID=""}
 : ${MAG_TOKEN=""}
 
-function _check_argument_patch_file() {
+function _mage::patch::_check_argument_patch_file() {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Required argument patch file missing";
         exit 1;
@@ -33,14 +23,14 @@ function _check_argument_patch_file() {
     fi
 }
 
-function _find_patches_with_prefix() {
+function _mage::patch::_find_patches_with_prefix() {
     local patch_file="$1";
     local prefix="$2";
     local relative_to_theme="$3";
-    for file in `mage::list-patches ${patch_file}`; do
+    for file in `mage::patch::list-patches ${patch_file}`; do
         if [[ "$file" =~ ^$prefix.* ]]; then
             if [[ "$relative_to_theme" == "yes" ]]; then
-                _make_theme_path_relative "$file" "$prefix";
+                _mage::patch::_make_theme_path_relative "$file" "$prefix";
             else
                 echo "$file";
             fi
@@ -48,7 +38,7 @@ function _find_patches_with_prefix() {
     done
 }
 
-function _check_mage_api_credentials() {
+function _mage::patch::_check_mage_api_credentials() {
     if [[ "$MAG_ID" == "" ]]; then
         lib::print_error "Please specify the environment variable MAG_ID";
         exit 1;
@@ -59,13 +49,13 @@ function _check_mage_api_credentials() {
     fi
 }
 
-function _make_theme_path_relative() {
+function _mage::patch::_make_theme_path_relative() {
     local file="$1";
     local prefix="$2";
     echo "$file" | sed -e "s!^$prefix!!" | sed -e "s|^/*[^/]*||" | sed -e "s|^/*[^/]*/||";
 }
 
-function _find_custom_templates() {
+function _mage::patch::_find_custom_templates() {
     local subdirectory_name="$1";
     find -L "$subdirectory_name" \
         -mindepth 3 \
@@ -78,9 +68,9 @@ function _find_custom_templates() {
         -not -path "*/base/default/*"
 }
 
-function _find_files_to_patch_with_prefix() {
+function _mage::patch::_find_files_to_patch_with_prefix() {
     lib::check_magento_root;
-    _check_argument_patch_file "$@";
+    _mage::patch::_check_argument_patch_file "$@";
 
     local patch_file="$1";
     local prefix="$2";
@@ -90,14 +80,14 @@ function _find_files_to_patch_with_prefix() {
         return;
     fi
 
-    local patched_files=$(_find_patches_with_prefix "$patch_file" "$prefix" "yes");
-    local custom_templates=$(_find_custom_templates "$prefix");
+    local patched_files=$(_mage::patch::_find_patches_with_prefix "$patch_file" "$prefix" "yes");
+    local custom_templates=$(_mage::patch::_find_custom_templates "$prefix");
 
     while read -r custom_template; do
-        # echo "Looking for custom template: $(_make_theme_path_relative "$custom_template" "$prefix";) in $patched_files";
+        # echo "Looking for custom template: $(_mage::patch::_make_theme_path_relative "$custom_template" "$prefix";) in $patched_files";
 
         if [[ "$custom_template" != "" ]]; then
-            local custom_template_relative=$(_make_theme_path_relative "$custom_template" "$prefix");
+            local custom_template_relative=$(_mage::patch::_make_theme_path_relative "$custom_template" "$prefix");
             set +e;
             echo "$patched_files" | grep -q "$custom_template_relative" && {
                 if [[ "$VERBOSE" != "false" ]]; then
@@ -116,7 +106,7 @@ function _find_files_to_patch_with_prefix() {
     done <<< "$custom_templates"
 }
 
-function _extract_patch() {
+function _mage::patch::_extract_patch() {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Required argument patch file missing";
         exit 1;
@@ -124,7 +114,7 @@ function _extract_patch() {
     sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$1";
 }
 
-function _patch_stat() {
+function _mage::patch::_patch_stat() {
     local revert_flag="";
     if [[ "$#" -gt "1" ]]; then
         revert_flag="-R";
@@ -134,10 +124,10 @@ function _patch_stat() {
         lib::print_error "Required argument patch file missing";
         exit 1;
     fi
-    _extract_patch $1 | git apply --stat $2 -p0;
+    _mage::patch::_extract_patch $1 | git apply --stat $2 -p0;
 }
 
-function _get_patch_mode() {
+function _mage::patch::_get_patch_mode() {
     if [[ "$PATCH_MODE" == "" ]]; then
         if [[ "$(lib::has_argument "--git" $@)" == "true" ]]; then
             PATCH_MODE="git";
@@ -148,9 +138,9 @@ function _get_patch_mode() {
     echo "$PATCH_MODE";
 }
 
-function mage::simulate() {
+function mage::patch::simulate() {
     lib::check_magento_root;
-    _check_argument_patch_file "$@";
+    _mage::patch::_check_argument_patch_file "$@";
 
     local patch_file="$1";
     local result;
@@ -166,16 +156,16 @@ function mage::simulate() {
         action="reverted";
     fi
 
-    local patch_mode="$(_get_patch_mode "$@")";
+    local patch_mode="$(_mage::patch::_get_patch_mode "$@")";
 
     lib::print_info "Checking if patch can be $action successfully (using $patch_mode)";
 
     set +e;
     if [[ "$patch_mode" == "patch" ]]; then
-        result=`_extract_patch ${patch_file} | patch --dry-run ${revert_flag} -p0`
+        result=`_mage::patch::_extract_patch ${patch_file} | patch --dry-run ${revert_flag} -p0`
         status=$?
     elif [[ "$patch_mode" == "git" ]]; then
-        result=`_extract_patch ${patch_file} | git apply --check ${revert_flag} -p0 2>&1`;
+        result=`_mage::patch::_extract_patch ${patch_file} | git apply --check ${revert_flag} -p0 2>&1`;
         status=$?
     else
         lib::print_error "Invalid patch mode '$PATCH_MODE'";
@@ -186,7 +176,7 @@ function mage::simulate() {
         if [[ "$VERBOSE" != "false" ]]; then
             lib::print_error "Patch can't be $action successfully.
 $result";
-            _patch_stat ${patch_file} "$revert_flag";
+            _mage::patch::_patch_stat ${patch_file} "$revert_flag";
         else
             lib::print_error "Patch can't be $action successfully."
         fi
@@ -203,14 +193,14 @@ $result";
         lib::print_success "Patch can be reverted";
     fi
     if [[ "$VERBOSE" != "false" ]]; then
-        _patch_stat ${patch_file} "$revert_flag";
+        _mage::patch::_patch_stat ${patch_file} "$revert_flag";
         echo "$result";
     fi
 }
 
-function mage::apply() {
+function mage::patch::apply() {
     lib::check_magento_root;
-    _check_argument_patch_file "$@";
+    _mage::patch::_check_argument_patch_file "$@";
 
     local patch_file="$1";
     shift;
@@ -218,12 +208,12 @@ function mage::apply() {
     /usr/bin/env bash "$patch_file" "$@";
 }
 
-function mage::list() {
+function mage::patch::list() {
     lib::check_magento_root;
 
     # If a patch file is given call it to list the applied patches
     if [[ "$#" -gt "0" ]]; then
-         _check_argument_patch_file "$@";
+         _mage::patch::_check_argument_patch_file "$@";
 
         local patch_file="$1";
         shift;
@@ -249,26 +239,26 @@ function mage::list() {
     fi
 }
 
-function mage::list-patches() {
-    _check_argument_patch_file "$@";
+function mage::patch::list-patches() {
+    _mage::patch::_check_argument_patch_file "$@";
 
     grep "^diff " "$1" | awk '{print $3;}';
 }
 
-function mage::list-patches-frontend-files() {
-    _check_argument_patch_file "$@";
-    _find_patches_with_prefix "$1" "app/design/frontend/" "no";
-    _find_patches_with_prefix "$1" "skin/frontend/" "no";
+function mage::patch::list-patches-frontend-files() {
+    _mage::patch::_check_argument_patch_file "$@";
+    _mage::patch::_find_patches_with_prefix "$1" "app/design/frontend/" "no";
+    _mage::patch::_find_patches_with_prefix "$1" "skin/frontend/" "no";
 }
 
-function mage::list-patches-adminhtml-files() {
-    _check_argument_patch_file "$@";
-    _find_patches_with_prefix "$1" "app/design/adminhtml/" "no";
-    _find_patches_with_prefix "$1" "skin/adminhtml/" "no";
+function mage::patch::list-patches-adminhtml-files() {
+    _mage::patch::_check_argument_patch_file "$@";
+    _mage::patch::_find_patches_with_prefix "$1" "app/design/adminhtml/" "no";
+    _mage::patch::_find_patches_with_prefix "$1" "skin/adminhtml/" "no";
 }
 
-function mage::list-patches-classes() {
-    _check_argument_patch_file "$@";
+function mage::patch::list-patches-classes() {
+    _mage::patch::_check_argument_patch_file "$@";
 
      grep "\sclass " "$1" | \
         # Remove comments
@@ -285,41 +275,41 @@ function mage::list-patches-classes() {
         awk '!a[$0]++';
 }
 
-function mage::list-custom-frontend-files() {
-    _find_custom_templates "app/design/frontend/";
+function mage::patch::list-custom-frontend-files() {
+    _mage::patch::_find_custom_templates "app/design/frontend/";
 }
 
-function mage::list-custom-adminhtml-files() {
-    _find_custom_templates "app/design/adminhtml/";
+function mage::patch::list-custom-adminhtml-files() {
+    _mage::patch::_find_custom_templates "app/design/adminhtml/";
 }
 
-function mage::find-files() {
-    mage::find-frontend-files "$@";
-    mage::find-adminhtml-files "$@";
+function mage::patch::find-files() {
+    mage::patch::find-frontend-files "$@";
+    mage::patch::find-adminhtml-files "$@";
 }
 
-function mage::find-frontend-files() {
+function mage::patch::find-frontend-files() {
     lib::check_magento_root;
-    _check_argument_patch_file "$@";
-    _find_files_to_patch_with_prefix "$1" "app/design/frontend/";
-    _find_files_to_patch_with_prefix "$1" "skin/frontend/";
+    _mage::patch::_check_argument_patch_file "$@";
+    _mage::patch::_find_files_to_patch_with_prefix "$1" "app/design/frontend/";
+    _mage::patch::_find_files_to_patch_with_prefix "$1" "skin/frontend/";
 }
 
-function mage::find-adminhtml-files() {
+function mage::patch::find-adminhtml-files() {
     lib::check_magento_root;
-    _check_argument_patch_file "$@";
-    _find_files_to_patch_with_prefix "$1" "app/design/adminhtml/";
-    _find_files_to_patch_with_prefix "$1" "skin/adminhtml/";
+    _mage::patch::_check_argument_patch_file "$@";
+    _mage::patch::_find_files_to_patch_with_prefix "$1" "app/design/adminhtml/";
+    _mage::patch::_find_files_to_patch_with_prefix "$1" "skin/adminhtml/";
 }
 
-function mage::repo-help {
-    _check_mage_api_credentials;
+function mage::patch::repo-help {
+    _mage::patch::_check_mage_api_credentials;
 
-    mage::repo-list "help";
+    mage::patch::repo-list "help";
 }
 
-function mage::repo-list {
-    _check_mage_api_credentials;
+function mage::patch::repo-list {
+    _mage::patch::_check_mage_api_credentials;
     local resource;
     if [[ "$#" -gt "0" ]]; then
         resource="$1";
@@ -330,8 +320,8 @@ function mage::repo-list {
     curl -s "https://$MAG_ID:$MAG_TOKEN@www.magentocommerce.com/products/downloads/info/$resource"
 }
 
-function mage::repo-download {
-    _check_mage_api_credentials;
+function mage::patch::repo-download {
+    _mage::patch::_check_mage_api_credentials;
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Required argument patch file missing";
         exit 1;
@@ -341,7 +331,7 @@ function mage::repo-download {
 }
 
 
-function mage::help() {
+function mage::patch::help() {
     echo "Usage: $0 command
 
 apply                           Applies the patch
@@ -365,14 +355,14 @@ repo-download                   Download a patch file
 function run () {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Missing argument 'command'";
-        mage::help;
+        mage::patch::help;
 
         exit 1;
     fi
     if [[ "$(lib::has_argument "-h" "$@")" == "true" ]] \
         || [[ "$(lib::has_argument "--help" "$@")" == "true" ]] \
         || [[ "$(lib::has_argument "help" "$@")" == "true" ]]; then
-        mage::help;
+        mage::patch::help;
 
         exit 0;
     fi
@@ -386,11 +376,9 @@ function run () {
         VERBOSE=$(lib::has_argument "-v" "$@");
     fi
 
-    if type "mage::$COMMAND" &> /dev/null; then
-        mage::${COMMAND} "$@";
+    if type "mage::patch::$COMMAND" &> /dev/null; then
+        mage::patch::${COMMAND} "$@";
     else
         lib::print_error "Command '$COMMAND' not found";
     fi
 }
-
-run "$@";

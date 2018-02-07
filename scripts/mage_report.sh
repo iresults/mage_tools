@@ -2,17 +2,7 @@
 set -o nounset
 set -e
 
-if hash realpath 2> /dev/null; then
-    DIR="$( cd "$(dirname $(realpath "${BASH_SOURCE[0]}" ))" && pwd )";
-elif hash readlink 2> /dev/null && [[ "$(uname -s)" != "Darwin" ]]; then
-    DIR="$( cd "$(dirname $(readlink -f "${BASH_SOURCE[0]}" ))" && pwd )";
-else
-    DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )";
-fi
-
-if [ -e "lib.sh" ]; then source "lib.sh"; fi
-source "$DIR/lib.sh";
-
+if [ -e "../lib.sh" ]; then source "../lib.sh"; fi
 
 function print_usage() {
     echo "Usage: $0 [report-id]

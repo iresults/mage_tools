@@ -15,6 +15,16 @@ fi
 if [ -e "lib.sh" ]; then source "lib.sh"; fi
 source "$DIR/lib.sh";
 
+
+function load_scripts() {
+    for file in ${DIR}/scripts/*.sh; do
+        source "$file";
+    done
+}
+function list_scripts() {
+     typeset -f | awk '/ \(\) $/ && !/^main / {print $1}' | grep 'mage::'
+}
+
 function mage::selfupdate() {
     lib::selfupdate;
 }
@@ -29,6 +39,11 @@ watch       Watch log files
 report      Print error reports
 
 ";
+
+    list_scripts | while read line; do
+        echo "$line" | sed -e 's/mage:://g'
+#        ${line};
+    done
 }
 
 function run () {
@@ -40,12 +55,17 @@ function run () {
     fi
 
     lib::check_utilities;
+    load_scripts;
 
     COMMAND_SET="$1";
     shift;
 
-    if [ "$COMMAND_SET" == "--help" ]; then
+
+
+    if [ "$COMMAND_SET" == "--help" ] || [ "$COMMAND_SET" == "help" ]; then
         mage::help;
+    elif type "mage::$COMMAND_SET" &> /dev/null; then
+        mage::${COMMAND_SET} "$@";
     elif type "mage::$COMMAND_SET" &> /dev/null; then
         mage::${COMMAND_SET} "$@";
     elif [[ -e "$(lib::get_script_directory)/mage_$COMMAND_SET" ]]; then
