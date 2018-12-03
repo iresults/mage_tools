@@ -379,17 +379,31 @@ function run () {
 
     lib::check_utilities;
 
-    COMMAND="$1";
-    shift;
-
     if [[ "$VERBOSE" == "" ]]; then
         VERBOSE=$(lib::has_argument "-v" "$@");
     fi
 
-    if type "mage::$COMMAND" &> /dev/null; then
-        mage::${COMMAND} "$@";
+    # Check if argument 1 is the patch file and argument 2 is the command
+    if [[ "$#" -gt "1" && -e "$1" && $(lib::command_exists "$2") == "true" ]]; then
+        COMMAND="$2";
+        PATCH_FILE="$1";
+        shift;
+        shift;
+
+        if type "mage::$COMMAND" &> /dev/null; then
+            mage::${COMMAND} "$PATCH_FILE" "$@";
+        else
+            lib::print_error "Command '$COMMAND' not found";
+        fi
     else
-        lib::print_error "Command '$COMMAND' not found";
+        COMMAND="$1";
+        shift;
+
+        if type "mage::$COMMAND" &> /dev/null; then
+            mage::${COMMAND} "$@";
+        else
+            lib::print_error "Command '$COMMAND' not found";
+        fi
     fi
 }
 

@@ -112,6 +112,14 @@ function lib::sub_command::run () {
     fi
 }
 
+function lib::command_exists() {
+    if type "mage::$1" &> /dev/null; then
+        echo "true";
+    else
+        echo "false";
+    fi
+}
+
 function lib::has_argument() {
     if [[ "$#" -lt "1" ]]; then
         lib::print_error "Missing argument 1 (search)";
