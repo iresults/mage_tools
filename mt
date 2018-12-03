@@ -2,6 +2,8 @@
 set -o nounset
 set -e
 
+# @deprecated use `mat` instead
+
 if hash realpath 2> /dev/null; then
     DIR="$( cd "$(dirname $(realpath "${BASH_SOURCE[0]}" ))" && pwd )";
 elif hash readlink 2> /dev/null; then
