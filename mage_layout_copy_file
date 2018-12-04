@@ -1,5 +1,5 @@
 #!/bin/sh
-if [ "$1" == "" ] || [ "$2" == "" ]; then
+if [[ "$1" == "" ]] || [[ "$2" == "" ]]; then
 	echo "Usage: mage_layout_copy_file source.xml destination-layout";
 	echo "I.e.: mage_layout_copy_file page.xml myLayout";
 	echo "Info: The prefered way would be to collect all changes in the local.xml of myLayout";

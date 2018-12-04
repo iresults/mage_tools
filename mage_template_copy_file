@@ -1,5 +1,5 @@
 #!/bin/sh
-if [ "$1" == "" ] || [ "$2" == "" ]; then
+if [[ "$1" == "" ]] || [[ "$2" == "" ]]; then
 	echo "Usage: mage_template_copy_file source/file.phtml destination-layout";
 	echo "I.e.: mage_template_copy_file catalog/product/list.phtml myLayout";
 	exit 1;

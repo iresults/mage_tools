@@ -10,7 +10,7 @@ else
     DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd )";
 fi
 
-if [ -e "lib.sh" ]; then source "lib.sh"; fi
+if [[ -e "lib.sh" ]]; then source "lib.sh"; fi
 source "$DIR/lib.sh";
 
 function mage::info::help() {
