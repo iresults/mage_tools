@@ -161,8 +161,13 @@ function mage::simulate() {
         revert_flag="-R";
     fi
 
+    local ignore_whitespace="";
+    if [[ "$(lib::has_argument "--ignore-whitespace" $@)" == "true" ]] ;then
+        ignore_whitespace="--ignore-whitespace";
+    fi
+
     local action="applied";
-    if [ "$revert_flag" == "-R" ] ;then
+    if [[ "$revert_flag" == "-R" ]] ;then
         action="reverted";
     fi
 
@@ -172,17 +177,17 @@ function mage::simulate() {
 
     set +e;
     if [[ "$patch_mode" == "patch" ]]; then
-        result=`_extract_patch ${patch_file} | patch --dry-run ${revert_flag} -p0`
+        result=`_extract_patch ${patch_file} | patch --dry-run ${revert_flag} ${ignore_whitespace} -p0`
         status=$?
     elif [[ "$patch_mode" == "git" ]]; then
-        result=`_extract_patch ${patch_file} | git apply --check ${revert_flag} -p0 2>&1`;
+        result=`_extract_patch ${patch_file} | git apply --check ${revert_flag} ${ignore_whitespace} -p0 2>&1`;
         status=$?
     else
         lib::print_error "Invalid patch mode '$PATCH_MODE'";
         exit 3;
     fi
 
-    if [ ${status} -eq 1 ] ; then
+    if [[ ${status} -eq 1 ]] ; then
         if [[ "$VERBOSE" != "false" ]]; then
             lib::print_error "Patch can't be $action successfully.
 $result";
@@ -192,7 +197,7 @@ $result";
         fi
         exit 1;
     fi
-    if [ ${status} -eq 2 ] ; then
+    if [[ ${status} -eq 2 ]] ; then
         lib::print_error "Patch can't be $action successfully.";
         exit 2;
     fi
@@ -206,6 +211,10 @@ $result";
         _patch_stat ${patch_file} "$revert_flag";
         echo "$result";
     fi
+}
+
+function mage::sim() {
+    mage::simulate "$@";
 }
 
 function mage::apply() {
@@ -237,8 +246,8 @@ function mage::list() {
     local applied_patches_list_file="app/etc/applied.patches.list";
 
     lib::print_info "Applied/reverted patches list:";
-    if [ -e "$applied_patches_list_file" ]; then
-        if [ ! -r "$applied_patches_list_file" ]; then
+    if [[ -e "$applied_patches_list_file" ]]; then
+        if [[ ! -r "$applied_patches_list_file" ]]; then
             lib::print_error "\"$applied_patches_list_file\" must be readable so applied patches list can be shown."
             exit 1;
         else
@@ -340,6 +349,13 @@ function mage::repo-download {
     curl -O "https://$MAG_ID:$MAG_TOKEN@www.magentocommerce.com/products/downloads/file/$1"
 }
 
+function mage::repo-get {
+    mage::repo-download "$@";
+}
+
+function mage::get {
+    mage::repo-download "$@";
+}
 
 function mage::help() {
     echo "Usage: $0 command
