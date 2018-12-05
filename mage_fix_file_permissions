@@ -1,18 +1,30 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-if [[ -d "app/" ]]; then
-	echo "Set permissions for Magento project in $PWD"
-else
-	echo "Current directory doesn't appear to be a Magento root"
-	exit 1
-fi
+main() {
+    if [[ -d "app/" ]]; then
+        echo "Set permissions for Magento project in $PWD"
+    else
+        echo "Current directory doesn't appear to be a Magento root"
+        exit 1
+    fi
 
-find . -type f -exec chmod 644 {} \;
-find . -type d -exec chmod 755 {} \;
+    local verbose="";
+    if [[ $* == *-v* ]]; then
+        verbose="-v";
+    fi
 
-chown -R :psacln ./*
+    find . -type f -exec chmod ${verbose} 644 "{}" \;
+    find . -type d -exec chmod ${verbose} 755 "{}" \;
 
-chmod o+w var var/.htaccess includes includes/config.php app/etc
-chmod -R o+w media
-chmod 550 mage;
-#chmod 550 pear;
+    if [[ "$#" -gt "0" ]]; then
+        local group="$1";
+        echo "Set file group: $group";
+        chown -R ${verbose} :${group} ./*
+    fi
+
+    chmod o+w var var/.htaccess includes includes/config.php app/etc
+    chmod -R o+w media
+    chmod 550 mage;
+}
+
+main "$@";
