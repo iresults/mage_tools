@@ -23,7 +23,7 @@ source "$DIR/lib.sh";
 
 function _check_argument_patch_file() {
     if [[ "$#" -lt "1" ]]; then
-        lib::print_error "Required argument patch file missing";
+        lib::print_error "Required argument 'patch file' missing";
         exit 1;
     fi
 
@@ -117,10 +117,7 @@ function _find_files_to_patch_with_prefix() {
 }
 
 function _extract_patch() {
-    if [[ "$#" -lt "1" ]]; then
-        lib::print_error "Required argument patch file missing";
-        exit 1;
-    fi
+    _check_argument_patch_file "$@";
     sed -e '1,/^__PATCHFILE_FOLLOWS__$/d' "$1";
 }
 
@@ -130,10 +127,7 @@ function _patch_stat() {
         revert_flag="-R";
     fi
 
-    if [[ "$#" -lt "1" ]]; then
-        lib::print_error "Required argument patch file missing";
-        exit 1;
-    fi
+    _check_argument_patch_file "$@";
     _extract_patch $1 | git apply --stat $2 -p0;
 }
 
@@ -418,7 +412,11 @@ function run () {
         if type "mage::$COMMAND" &> /dev/null; then
             mage::${COMMAND} "$@";
         else
-            lib::print_error "Command '$COMMAND' not found";
+            if [[ -e "$COMMAND" ]]; then
+                lib::print_error "Required argument 'command' missing";
+            else
+                lib::print_error "Command '$COMMAND' not found";
+            fi
         fi
     fi
 }
