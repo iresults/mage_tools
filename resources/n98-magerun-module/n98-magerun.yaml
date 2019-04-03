@@ -1,0 +1,6 @@
+autoloaders:
+    Iresults: %module%/src
+
+commands:
+    customCommands:
+        - Iresults\MageTools\Patch\AnalyseCommand
