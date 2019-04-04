@@ -6,8 +6,10 @@ use Iresults\MageTools\Patch\Block\BlockInterface;
 use Iresults\MageTools\Patch\Block\ClassBlock;
 use Iresults\MageTools\Patch\Block\ConfigurationBlock;
 use Iresults\MageTools\Patch\Block\JavascriptBlock;
+use Iresults\MageTools\Patch\Block\PhpBlock;
 use Iresults\MageTools\Patch\Block\StylesheetBlock;
 use Iresults\MageTools\Patch\Block\TemplateBlock;
+use Iresults\MageTools\Patch\Block\TranslationBlock;
 use Iresults\MageTools\Patch\Block\UnknownBlock;
 use function explode;
 use function preg_match;
@@ -64,7 +66,7 @@ class PatchAnalyser
         $classBlocks = [];
         foreach ($this->analyse() as $block) {
             if ($block instanceof ClassBlock) {
-                $classBlocks[$block->getType() . '::' . $block->getName()] = $block;
+                $classBlocks[$block->getClassType() . '::' . $block->getName()] = $block;
             }
         }
 
@@ -83,7 +85,7 @@ class PatchAnalyser
         ];
         foreach ($this->getClasses() as $block) {
             if ($block instanceof ClassBlock) {
-                $classBlocks[$block->getType()][$block->getName()] = $block;
+                $classBlocks[$block->getClassType()][$block->getName()] = $block;
             }
         }
 
@@ -109,20 +111,26 @@ class PatchAnalyser
                 case '.phtml':
                 case '.html':
                     return new TemplateBlock($filepath, $line);
-                    break;
 
                 case '.xml':
                     return new ConfigurationBlock($filepath, $line);
-                    break;
 
                 case '.css':
                     return new StylesheetBlock($filepath, $line);
-                    break;
+
                 case '.js':
                     return new JavascriptBlock($filepath, $line);
-                    break;
+
+                case '.csv':
+                    return new TranslationBlock($filepath, $line);
 
                 case '.php':
+                    if ($this->shouldSkipPhpBlock($filepath)) {
+                        return null;
+                    } else {
+                        return new PhpBlock($filepath, $line);
+                    }
+
                 default:
                     return new UnknownBlock($filepath, $line);
             }
@@ -135,5 +143,16 @@ class PatchAnalyser
         }
 
         return null;
+    }
+
+    /**
+     * @param $filepath
+     * @return bool
+     */
+    private function shouldSkipPhpBlock($filepath)
+    {
+        return $filepath === 'app/Mage.php'
+            || substr($filepath, 0, 11) === 'lib/Varien/'
+            || substr($filepath, 0, 9) === 'app/code/';
     }
 }

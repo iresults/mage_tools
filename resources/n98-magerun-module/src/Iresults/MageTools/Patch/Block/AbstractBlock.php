@@ -3,6 +3,10 @@
 namespace Iresults\MageTools\Patch\Block;
 
 use Iresults\MageTools\Assert;
+use function get_class;
+use function strrchr;
+use function strtolower;
+use function substr;
 
 abstract class AbstractBlock implements BlockInterface
 {
@@ -28,6 +32,11 @@ abstract class AbstractBlock implements BlockInterface
         Assert::assertString($content);
         $this->identifier = $identifier;
         $this->content = $content;
+    }
+
+    public function getType()
+    {
+        return strtolower(substr(strrchr(get_class($this), '\\'), 1, -5));
     }
 
     public function getIdentifier()

@@ -10,4 +10,11 @@ interface BlockInterface
      * @return string
      */
     public function getIdentifier();
+
+    /**
+     * Return the Block's type (e.g. 'class', 'javascript', 'configuration')
+     *
+     * @return string
+     */
+    public function getType();
 }

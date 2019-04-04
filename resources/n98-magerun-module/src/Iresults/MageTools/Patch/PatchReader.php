@@ -2,13 +2,11 @@
 
 namespace Iresults\MageTools\Patch;
 
+use Iresults\MageTools\Exception\InvalidPatchFileException;
 use function fclose;
 use function feof;
 use function fgets;
-use function file_exists;
 use function fopen;
-use function is_readable;
-use function is_string;
 use function sprintf;
 use function trim;
 
@@ -26,21 +24,14 @@ class PatchReader
      */
     public function __construct($file)
     {
-        if (!is_string($file) || '' === trim($file)) {
-            throw new \InvalidArgumentException('Patch file must be an non-empty string');
-        }
-        if (!is_readable($file)) {
-            if (!file_exists($file)) {
-                throw new \InvalidArgumentException(sprintf('Patch file "%s" could not be found', $file));
-            } else {
-                throw new \InvalidArgumentException(sprintf('Patch file "%s" is not readable', $file));
-            }
-        }
+        InvalidPatchFileException::assert($file);
         $this->handle = fopen($file, 'r');
         if (!$this->handle) {
-            throw new \InvalidArgumentException(sprintf('Patch file "%s" could not be opened', $file));
+            throw new InvalidPatchFileException(sprintf('Patch file "%s" could not be opened', $file));
         }
-        $this->scrollToPatchStart($this->handle);
+        if (!$this->scrollToPatchStart($this->handle)) {
+            throw new InvalidPatchFileException(sprintf('File "%s" does not appear to be a valid patch file', $file));
+        }
     }
 
     public function read()
@@ -60,15 +51,17 @@ class PatchReader
     }
 
     /**
-     * @param $handle
+     * @param resource $handle
+     * @return bool Return if the patch start marker was found
      */
     private function scrollToPatchStart($handle)
     {
         while (($buffer = fgets($handle, 4096)) !== false) {
             if (trim($buffer) === '__PATCHFILE_FOLLOWS__') {
-                return;
+                return true;
             }
         }
-    }
 
+        return false;
+    }
 }

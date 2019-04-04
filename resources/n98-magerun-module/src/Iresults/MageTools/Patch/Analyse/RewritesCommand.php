@@ -1,28 +1,21 @@
 <?php
 
-namespace Iresults\MageTools\Patch;
+namespace Iresults\MageTools\Patch\Analyse;
 
 use Iresults\MageTools\Patch\Block\ClassBlock;
-use N98\Util\Console\Helper\Table\Renderer\RendererFactory;
+use Iresults\MageTools\Patch\PatchAnalyser;
 use N98\Util\Console\Helper\TableHelper;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AnalyseCommand extends \N98\Magento\Command\Developer\Module\Rewrite\AbstractRewriteCommand
+class RewritesCommand extends AbstractAnalyseCommand
 {
     protected function configure()
     {
         $this
-            ->setName('patch:analyse')
+            ->setName('patch:analyse:rewrites')
             ->setDescription('Find rewritten classes in the patch')
-            ->addArgument('patch-file', InputArgument::REQUIRED, 'Patch file to analyse')->addOption(
-                'format',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'Output Format. One of [' . implode(',', RendererFactory::getFormats()) . ']'
-            );
+            ->addDefaultArgumentsAndOptions();
     }
 
     /**
@@ -34,7 +27,7 @@ class AnalyseCommand extends \N98\Magento\Command\Developer\Module\Rewrite\Abstr
     {
         $this->detectMagento($output);
         if ($this->initMagento(false)) {
-            $criticalClasses = $this->analyseClasses($input->getArgument('patch-file'));
+            $criticalClasses = $this->analyseClasses($this->getPatchAnalyser($input));
             if (empty($criticalClasses)) {
                 $output->writeln('<info>No critical classes found</info>');
 
@@ -49,7 +42,7 @@ class AnalyseCommand extends \N98\Magento\Command\Developer\Module\Rewrite\Abstr
                 $classBlock = $match[0];
                 $rewriteClass = $match[1];
                 $table[] = [
-                    $classBlock->getType(),
+                    $classBlock->getClassType(),
                     $classBlock->getIdentifier(),
                     $classBlock->getName(),
                     implode(', ', $rewriteClass),
@@ -65,15 +58,9 @@ class AnalyseCommand extends \N98\Magento\Command\Developer\Module\Rewrite\Abstr
         }
     }
 
-    private function analyseClasses($file)
+    private function analyseClasses(PatchAnalyser $analyser)
     {
-        if ('' === trim($file)) {
-            throw new \RuntimeException('No patch file given');
-        }
-
         $criticalClasses = [];
-        $patchReader = new PatchReader($file);
-        $analyser = new PatchAnalyser($patchReader);
         $rewritesByType = $this->loadRewrites();
         foreach ($analyser->getClassesByType() as $type => $rewrites) {
             /** @var ClassBlock $classBlock */
@@ -91,7 +78,7 @@ class AnalyseCommand extends \N98\Magento\Command\Developer\Module\Rewrite\Abstr
 
     private function getRewrite(array $rewritesByType, ClassBlock $classBlock)
     {
-        $type = $classBlock->getType();
+        $type = $classBlock->getClassType();
         if (!isset($rewritesByType[$type])) {
             return null;
         }

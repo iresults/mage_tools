@@ -13,7 +13,7 @@ class ClassBlock extends AbstractBlock
     /**
      * @return string
      */
-    public function getType()
+    public function getClassType()
     {
         $identifier = $this->getIdentifier();
         if (strtolower(substr($identifier, -10)) === 'controller') {
@@ -44,7 +44,7 @@ class ClassBlock extends AbstractBlock
         if (substr($identifier, 0, 5) === 'Zend_' || substr($identifier, 0, 7) === 'Varien_') {
             return $this->lcWords($identifier);
         }
-        if ($this->getType() === self::TYPE_CONTROLLER) {
+        if ($this->getClassType() === self::TYPE_CONTROLLER) {
             return $this->lcWords($identifier);
         }
 

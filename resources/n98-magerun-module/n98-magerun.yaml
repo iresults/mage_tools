@@ -3,4 +3,6 @@ autoloaders:
 
 commands:
     customCommands:
-        - Iresults\MageTools\Patch\AnalyseCommand
+        - Iresults\MageTools\Patch\Analyse\RewritesCommand
+        - Iresults\MageTools\Patch\Analyse\ClassTypeCommand
+        - Iresults\MageTools\Patch\Analyse\TypeCommand
