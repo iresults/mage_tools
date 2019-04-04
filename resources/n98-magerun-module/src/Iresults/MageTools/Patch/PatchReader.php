@@ -2,6 +2,16 @@
 
 namespace Iresults\MageTools\Patch;
 
+use function fclose;
+use function feof;
+use function fgets;
+use function file_exists;
+use function fopen;
+use function is_readable;
+use function is_string;
+use function sprintf;
+use function trim;
+
 class PatchReader
 {
     /**

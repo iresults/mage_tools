@@ -9,6 +9,11 @@ use Iresults\MageTools\Patch\Block\JavascriptBlock;
 use Iresults\MageTools\Patch\Block\StylesheetBlock;
 use Iresults\MageTools\Patch\Block\TemplateBlock;
 use Iresults\MageTools\Patch\Block\UnknownBlock;
+use function explode;
+use function preg_match;
+use function sort;
+use function strrchr;
+use function substr;
 
 class PatchAnalyser
 {
