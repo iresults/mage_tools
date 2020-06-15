@@ -30,10 +30,18 @@ function _show_report() {
 }
 
 function _get_latest() {
-    ls -ltr var/report | awk '{print $9}' | tail -n 1
+    local base="$1";
+    ls -ltr "var/report/$base" | awk '{print $9}' | tail -n 1
 }
 function _show_latest() {
-    _show_report $(_get_latest);
+    local latest;
+    latest="$(_get_latest '')"
+    if [[ -d "var/report/$latest" ]]; then
+        local report_subdirectory="$latest";
+        _show_report "$report_subdirectory/$(_get_latest "$report_subdirectory")";
+    else
+        _show_report "$latest";
+    fi
 }
 
 function run () {
