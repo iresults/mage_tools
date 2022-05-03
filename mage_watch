@@ -40,29 +40,31 @@ function _check_log_file() {
 }
 
 function _watch() {
+    local file_name="$1";
+    shift;
     _check_log_dir;
-    _check_log_file "$1";
-    tail -fn 45 --sleep-interval=5 "var/log/$1.log";
+    _check_log_file "$file_name";
+    tail -fn 45 --sleep-interval=5 "var/log/$file_name.log" "$@";
 }
 
 function mage::watch::system () {
-    _watch "system";
+    _watch "system" "$@";
 }
 
 function mage::watch::exception() {
-    _watch "exception";
+    _watch "exception" "$@";
 }
 
 function mage::watch::debug() {
-    _watch "debug";
+    _watch "debug" "$@";
 }
 
 function mage::watch::sys() {
-    mage::watch::system;
+   mage::watch::system "$@";
 }
 
 function mage::watch::exc() {
-    mage::watch::exception;
+    mage::watch::exception "$@";
 }
 
 lib::sub_command::run "mage::watch" "$@";
